@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Academia - Active Directory Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .header .engineer {
+            color: #667eea;
+            margin-top: 5px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .department-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .department-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .department-header {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .department-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .user-count {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .user-list {
+            list-style: none;
+        }
+        
+        .user-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-name {
+            color: #333;
+        }
+        
+        .user-title {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .groups-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .group-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .group-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .group-members {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stat-card, .department-card, .groups-section {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Resource Academia International</h1>
+            <div class="engineer">Network/IT Administrator: Israr Sadaq | Berlin, Germany</div>
+            <div id="timestamp" style="color: #999; margin-top: 10px;"></div>
+        </div>
+        
+        <div class="stats-grid" id="stats-grid">
+            <!-- Stats will be loaded here -->
+        </div>
+        
+        <div class="department-grid" id="department-grid">
+            <!-- Department cards will be loaded here -->
+        </div>
+        
+        <div class="groups-section">
+            <h2>🔐 Security Groups</h2>
+            <div class="groups-grid" id="groups-grid">
+                <!-- Groups will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Active Directory Structure | Last Updated: <span id="last-updated">Loading...</span></p>
+        </div>
+    </div>
+    
+    <script>
+        // Load AD data from JSON file
+        async function loadADData() {
+            try {
+                // In a real scenario, this would come from a PowerShell script
+                // For now, we'll use sample data from your AD structure
+                const response = await fetch('/api/ad-data');
+                // Since we don't have an API, we'll use embedded data
+                return getEmbeddedData();
+            } catch (error) {
+                console.error('Error loading AD data:', error);
+                return getEmbeddedData();
+            }
+        }
+        
+        function getEmbeddedData() {
+            // This data should match your actual AD structure
+            return {
+                statistics: {
+                    total_users: 32,
+                    total_groups: 16,
+                    total_ous: 22,
+                    enabled_users: 32,
+                    disabled_users: 0
+                },
+                departments: {
+                    "IT": { users_count: 5, users: [
+                        { name: "Israr Sadaq", title: "Network Administrator", enabled: true },
+                        { name: "Ahmed Hassan", title: "System Administrator", enabled: true },
+                        { name: "Fatima Ali", title: "Help Desk Lead", enabled: true },
+                        { name: "Usman Malik", title: "Network Engineer", enabled: true },
+                        { name: "Sara Khan", title: "System Engineer", enabled: true }
+                    ]},
+                    "Finance": { users_count: 4, users: [
+                        { name: "Omar Khan", title: "Finance Manager", enabled: true },
+                        { name: "Saima Akhtar", title: "Senior Accountant", enabled: true },
+                        { name: "Ali Raza", title: "Accountant", enabled: true },
+                        { name: "Nadia Shah", title: "Payroll Specialist", enabled: true }
+                    ]},
+                    "Marketing": { users_count: 4, users: [
+                        { name: "Zain Malik", title: "Marketing Manager", enabled: true },
+                        { name: "Ayesha Riaz", title: "Digital Marketing Specialist", enabled: true },
+                        { name: "Hamza Ali", title: "Content Creator", enabled: true },
+                        { name: "Sana Khan", title: "Social Media Manager", enabled: true }
+                    ]},
+                    "Teachers": { users_count: 5, users: [
+                        { name: "Dr. Muhammad Raza", title: "Professor (CS)", enabled: true },
+                        { name: "Ms. Sara Ahmed", title: "Senior Lecturer (IT)", enabled: true },
+                        { name: "Dr. Ali Hassan", title: "Professor (Mathematics)", enabled: true },
+                        { name: "Mr. Khalid Malik", title: "Lecturer (Networking)", enabled: true },
+                        { name: "Ms. Fatima Zahra", title: "Lecturer (Programming)", enabled: true }
+                    ]},
+                    "Students": { users_count: 10, users: [
+                        { name: "Ali Raza", title: "BS CS Student", enabled: true },
+                        { name: "Fatima Khan", title: "BS IT Student", enabled: true },
+                        { name: "Omar Malik", title: "BS CS Student", enabled: true },
+                        { name: "Sara Ahmed", title: "BS IT Student", enabled: true },
+                        { name: "Hamza Ali", title: "BS SE Student", enabled: true }
+                    ]},
+                    "Admin": { users_count: 4, users: [
+                        { name: "Hina Tariq", title: "HR Manager", enabled: true },
+                        { name: "Usman Chaudhry", title: "Admin Officer", enabled: true },
+                        { name: "Rabia Khan", title: "Receptionist", enabled: true },
+                        { name: "Imran Ali", title: "Facility Manager", enabled: true }
+                    ]}
+                },
+                groups: [
+                    { name: "IT_Admins", members: 2, description: "Full IT administration" },
+                    { name: "Network_Admins", members: 1, description: "Network device management" },
+                    { name: "Help_Desk", members: 1, description: "User support staff" },
+                    { name: "Finance_Managers", members: 1, description: "Finance management" },
+                    { name: "Finance_Staff", members: 1, description: "Finance department staff" },
+                    { name: "Marketing_Staff", members: 2, description: "Marketing department" },
+                    { name: "Faculty", members: 2, description: "All teaching staff" },
+                    { name: "Students", members: 10, description: "All enrolled students" },
+                    { name: "Admin_Staff", members: 2, description: "Administration staff" }
+                ],
+                last_updated: new Date().toLocaleString()
+            };
+        }
+        
+        function updateDashboard(data) {
+            // Update stats
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.statistics.total_users}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.statistics.total_groups}</div>
+                    <div class="stat-label">Security Groups</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.statistics.total_ous}</div>
+                    <div class="stat-label">Organizational Units</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${data.statistics.enabled_users}</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            `;
+            
+            // Update departments
+            const deptGrid = document.getElementById('department-grid');
+            deptGrid.innerHTML = '';
+            
+            const departments = ['IT', 'Finance', 'Marketing', 'Teachers', 'Students', 'Admin'];
+            const colors = ['#667eea', '#48bb78', '#ed8936', '#9f7aea', '#f687b3', '#4299e1'];
+            
+            departments.forEach((dept, index) => {
+                const deptData = data.departments[dept];
+                const userList = deptData.users.slice(0, 5).map(user => `
+                    <li>
+                        <div>
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-title">${user.title}</div>
+                        </div>
+                        <span class="status-badge ${user.enabled ? 'status-enabled' : 'status-disabled'}">
+                            ${user.enabled ? 'Active' : 'Disabled'}
+                        </span>
+                    </li>
+                `).join('');
+                
+                deptGrid.innerHTML += `
+                    <div class="department-card">
+                        <div class="department-header">
+                            <span class="department-name">${dept}</span>
+                            <span class="user-count">${deptData.users_count} users</span>
+                        </div>
+                        <ul class="user-list">
+                            ${userList}
+                            ${deptData.users_count > 5 ? `<li style="text-align: center; color: #667eea;">+${deptData.users_count - 5} more...</li>` : ''}
+                        </ul>
+                    </div>
+                `;
+            });
+            
+            // Update groups
+            const groupsGrid = document.getElementById('groups-grid');
+            groupsGrid.innerHTML = data.groups.map(group => `
+                <div class="group-card">
+                    <div class="group-name">${group.name}</div>
+                    <div class="group-members">${group.members} members • ${group.description}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('last-updated').textContent = data.last_updated;
+            document.getElementById('timestamp').textContent = `Dashboard Loaded: ${new Date().toLocaleString()}`;
+        }
+        
+        // Load data and update dashboard
+        loadADData().then(data => updateDashboard(data));
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadADData().then(data => updateDashboard(data));
+        }, 30000);
+    </script>
+</body>
+</html>
