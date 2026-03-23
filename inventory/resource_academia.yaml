@@ -1,0 +1,243 @@
+# ============================================================================
+# RESOURCE ACADEMIA INTERNATIONAL - NETWORK INVENTORY
+# Network Engineer: Israr Sadaq
+# Location: Islamabad, Pakistan
+# Project: Zero-Touch Provisioning System
+# Date: March 2026
+# ============================================================================
+
+company:
+  name: "Resource Academia International"
+  location: "Islamabad, Pakistan"
+  engineer: "Israr Sadaq"
+  email: "israrsadaq057@gmail.com"
+
+# VLAN Configuration
+vlans:
+  - id: 10
+    name: IT_Finance
+    subnet: "10.10.10.0/24"
+    gateway: "10.10.10.1"
+    description: "IT Department and Finance Network"
+    security_zone: "internal"
+    
+  - id: 20
+    name: Marketing
+    subnet: "10.10.20.0/24"
+    gateway: "10.10.20.1"
+    description: "Marketing Department"
+    security_zone: "internal"
+    
+  - id: 30
+    name: Teachers
+    subnet: "10.10.30.0/24"
+    gateway: "10.10.30.1"
+    description: "Faculty Network"
+    security_zone: "internal"
+    
+  - id: 40
+    name: Students
+    subnet: "10.10.40.0/24"
+    gateway: "10.10.40.1"
+    description: "Student Lab Network"
+    security_zone: "restricted"
+    restricted: true
+    acl: "DENY_SERVER_ACCESS"
+    
+  - id: 50
+    name: Servers
+    subnet: "10.10.50.0/24"
+    gateway: "10.10.50.1"
+    description: "Server Farm"
+    security_zone: "dmz"
+    
+  - id: 60
+    name: Management
+    subnet: "10.10.60.0/24"
+    gateway: "10.10.60.1"
+    description: "Network Management"
+    security_zone: "management"
+    
+  - id: 70
+    name: Admin
+    subnet: "10.10.70.0/24"
+    gateway: "10.10.70.1"
+    description: "Administration Department"
+    security_zone: "internal"
+    
+  - id: 99
+    name: Guest
+    subnet: "172.16.99.0/24"
+    gateway: "172.16.99.1"
+    description: "Guest WiFi"
+    security_zone: "guest"
+    guest: true
+
+# Server Infrastructure
+servers:
+  - name: "DC1"
+    role: "Active Directory / DNS / DHCP"
+    ip: "10.10.10.10"
+    vlan: 10
+    os: "Windows Server 2022"
+    services: ["AD DS", "DNS", "DHCP"]
+    mgmt_port: 389
+    
+  - name: "WEB1"
+    role: "Web Server / LMS"
+    ip: "10.10.50.10"
+    vlan: 50
+    os: "Ubuntu 22.04 LTS"
+    services: ["Apache2", "Moodle LMS", "PHP 8.1"]
+    mgmt_port: 443
+    
+  - name: "EMAIL1"
+    role: "Email Server"
+    ip: "10.10.50.20"
+    vlan: 50
+    os: "Ubuntu 22.04 LTS"
+    services: ["Postfix", "Dovecot", "SpamAssassin"]
+    mgmt_port: 993
+    
+  - name: "FILE1"
+    role: "File Server"
+    ip: "10.10.50.30"
+    vlan: 50
+    os: "Windows Server 2022"
+    services: ["SMB Shares", "NTFS Permissions"]
+    shares: ["StudentData", "TeacherData", "Shared", "Backups"]
+    
+  - name: "BACKUP1"
+    role: "Backup Server"
+    ip: "10.10.60.10"
+    vlan: 60
+    os: "Ubuntu 22.04 LTS"
+    services: ["Bacula", "Rsync"]
+    backup_schedule: "Daily 02:00"
+
+# Network Devices
+network_devices:
+  # Firewall
+  firewall:
+    name: "Firepower-2130"
+    model: "Cisco Firepower 2130"
+    mgmt_ip: "10.10.60.1"
+    interfaces:
+      outside:
+        name: "Outside"
+        ip: "203.0.113.1/29"
+        description: "Internet Connection"
+      inside:
+        name: "Inside"
+        ip: "10.10.0.1/24"
+        description: "Core Network"
+    security_zones:
+      - name: "outside"
+        interface: "outside"
+      - name: "inside"
+        interface: "inside"
+      - name: "dmz"
+        interface: "inside"
+  
+  # Core Switch
+  core_switch:
+    name: "Core-SW-9500"
+    model: "Cisco Catalyst 9500-48Y4C"
+    mgmt_ip: "10.10.60.2"
+    role: "Core"
+    uplink_ports: ["Te1/0/1", "Te1/0/2"]
+    distribution_ports: ["Gi1/0/1", "Gi1/0/2", "Gi1/0/3", "Gi1/0/4", "Gi1/0/5"]
+    
+  # Distribution Switches
+  distribution_switches:
+    - name: "Dist-SW-Finance-IT"
+      model: "Cisco Catalyst 9300-48T"
+      mgmt_ip: "10.10.60.11"
+      vlans: [10]
+      uplink: "Te1/0/1"
+      users: 25
+      
+    - name: "Dist-SW-Marketing"
+      model: "Cisco Catalyst 9300-48T"
+      mgmt_ip: "10.10.60.12"
+      vlans: [20]
+      uplink: "Te1/0/2"
+      users: 12
+      
+    - name: "Dist-SW-Teachers"
+      model: "Cisco Catalyst 9200-48T"
+      mgmt_ip: "10.10.60.13"
+      vlans: [30]
+      uplink: "Te1/0/3"
+      users: 50
+      
+    - name: "Dist-SW-Students"
+      model: "Cisco Catalyst 9200-48T"
+      mgmt_ip: "10.10.60.14"
+      vlans: [40]
+      uplink: "Te1/0/4"
+      users: 200
+      acl: "deny_student_server_access"
+      
+    - name: "Dist-SW-Servers"
+      model: "Cisco Catalyst 9300-24T"
+      mgmt_ip: "10.10.60.15"
+      vlans: [50]
+      uplink: "Te1/0/5"
+      
+    - name: "Dist-SW-Admin"
+      model: "Cisco Catalyst 9200-48T"
+      mgmt_ip: "10.10.60.16"
+      vlans: [70]
+      uplink: "Te1/0/6"
+      users: 20
+
+# Security Policies
+security_policies:
+  # Student restrictions
+  - name: "STUDENT_RESTRICTED"
+    source_vlan: 40
+    destination_networks: ["10.10.50.0/24", "10.10.10.0/24"]
+    action: "deny"
+    description: "Students cannot access servers or IT network"
+    
+  - name: "GUEST_ISOLATION"
+    source_vlan: 99
+    destination_networks: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+    action: "deny"
+    description: "Guest WiFi isolated from internal networks"
+    
+  - name: "MANAGEMENT_ACCESS"
+    source_networks: ["10.10.10.0/24"]
+    destination_network: "10.10.60.0/24"
+    protocols: ["SSH", "HTTPS", "SNMP"]
+    action: "permit"
+    description: "Only IT can access management VLAN"
+
+# DHCP Scopes
+dhcp_scopes:
+  - vlan: 10
+    subnet: "10.10.10.0/24"
+    range_start: "10.10.10.100"
+    range_end: "10.10.10.200"
+    dns_servers: ["10.10.10.10"]
+    domain: "resourceacademia.local"
+    
+  - vlan: 20
+    subnet: "10.10.20.0/24"
+    range_start: "10.10.20.100"
+    range_end: "10.10.20.200"
+    dns_servers: ["10.10.10.10"]
+    
+  - vlan: 30
+    subnet: "10.10.30.0/24"
+    range_start: "10.10.30.100"
+    range_end: "10.10.30.200"
+    dns_servers: ["10.10.10.10"]
+    
+  - vlan: 40
+    subnet: "10.10.40.0/24"
+    range_start: "10.10.40.100"
+    range_end: "10.10.40.200"
+    dns_servers: ["10.10.10.10"]
+    lease_time: 86400

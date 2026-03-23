@@ -1,0 +1,43 @@
+!
+! Generated for {{ device.name }}
+! Network Engineer: Israr Sadaq
+!
+hostname {{ device.name }}
+!
+enable secret {{ enable_secret }}
+!
+{% for vlan in vlans %}
+vlan {{ vlan.id }}
+ name {{ vlan.name }}
+!
+{% endfor %}
+!
+{% for vlan in vlans %}
+interface Vlan{{ vlan.id }}
+ description {{ vlan.name }} Gateway
+ ip address {{ vlan.gateway.split('/')[0] }} 255.255.255.0
+ no shutdown
+!
+{% endfor %}
+!
+ip routing
+!
+router ospf 1
+ router-id {{ device.mgmt_ip }}
+ network 10.10.0.0 0.0.255.255 area 0
+!
+{% for vlan in vlans if vlan.id != 99 %}
+interface Vlan{{ vlan.id }}
+ ip helper-address 10.10.10.20
+!
+{% endfor %}
+!
+ip domain-name resourceacademia.edu.pk
+!
+username admin privilege 15 secret {{ enable_secret }}
+!
+line vty 0 15
+ transport input ssh
+ login local
+!
+end
